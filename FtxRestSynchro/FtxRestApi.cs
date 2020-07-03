@@ -47,7 +47,7 @@ namespace FtxRestSynchro
         public OrderBookDepth GetOrderBookDepth(string symbol, int limit = 5)
         {
             var resultString = $"api/markets/{symbol}/orderbook?depth={limit}";
-            var result = Call(HttpMethod.Get, resultString).Result;
+            var result = Call(HttpMethod.Get, resultString);
             var res = FtxRestDataParser.ParseOrderBookDepth(result, limit);
             return res;
         }
@@ -82,7 +82,7 @@ namespace FtxRestSynchro
             }
 
             var sign = GenerateSignature(HttpMethod.Post, "/api/orders", body);
-            var result = CallAsyncSign(HttpMethod.Post, path, sign, body).Result;
+            var result = CallSign(HttpMethod.Post, path, sign, body);
             var res = FtxRestDataParser.ParseOrderInfo(result);
             return res;
         }
@@ -100,7 +100,7 @@ namespace FtxRestSynchro
             body += $"\"size\": {size}}}";
 
             var sign = GenerateSignature(HttpMethod.Post, $"/{path}", body);
-            var result = CallAsyncSign(HttpMethod.Post, path, sign, body).Result;
+            var result = CallSign(HttpMethod.Post, path, sign, body);
             var res = FtxRestDataParser.ParseOrderInfo(result);
             return res;
         }
@@ -109,7 +109,7 @@ namespace FtxRestSynchro
         {
             var resultString = $"api/orders/{id}";
             var sign = GenerateSignature(HttpMethod.Delete, $"/api/orders/{id}", "");
-            var result = CallAsyncSign(HttpMethod.Delete, resultString, sign).Result;
+            var result = CallSign(HttpMethod.Delete, resultString, sign);
             var res = FtxRestDataParser.ParseCancelOrderInfo(result);
 
             return res;
@@ -120,7 +120,7 @@ namespace FtxRestSynchro
             var resultString = $"api/account";
 
             var sign = GenerateSignature(HttpMethod.Get, "/api/account", "");
-            var result = CallAsyncSign(HttpMethod.Get, resultString, sign).Result;
+            var result = CallSign(HttpMethod.Get, resultString, sign);
 
             var res = FtxRestDataParser.ParseAccountInfo(result);
             return res;
@@ -128,7 +128,7 @@ namespace FtxRestSynchro
 
         #region Util
 
-        private async Task<string> Call(HttpMethod method, string endpoint)
+        private string Call(HttpMethod method, string endpoint)
         {
             var request = new HttpRequestMessage(method, endpoint);
 
@@ -137,9 +137,8 @@ namespace FtxRestSynchro
 
             try
             {
-                response = await _httpClient.SendAsync(request);
-
-                result = await response.Content.ReadAsStringAsync();
+                response = _httpClient.SendAsync(request).Result;
+                result = response.Content.ReadAsStringAsync().Result;
             }
             catch (Exception e)
             {
@@ -159,7 +158,7 @@ namespace FtxRestSynchro
             return result;
         }
 
-        private async Task<string> CallAsyncSign(HttpMethod method, string endpoint, string sign, string body = null)
+        private string CallSign(HttpMethod method, string endpoint, string sign, string body = null)
         {
             var request = new HttpRequestMessage(method, endpoint);
 
@@ -177,8 +176,8 @@ namespace FtxRestSynchro
 
             try
             {
-                response = await _httpClient.SendAsync(request);
-                result = await response.Content.ReadAsStringAsync();
+                response = _httpClient.SendAsync(request).Result;
+                result = response.Content.ReadAsStringAsync().Result;
             }
             catch (Exception e)
             {
